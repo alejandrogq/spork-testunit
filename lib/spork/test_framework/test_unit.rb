@@ -40,7 +40,7 @@ class Spork::TestFramework::TestUnit < Spork::TestFramework
       end
       argv.compact!
 
-      require 'test/unit'                                                                                         
+      require 'test/unit'                                                                                        
       if defined? Turn
         # Use turn's wrapper around minitest
         if argv.empty?
@@ -48,9 +48,13 @@ class Spork::TestFramework::TestUnit < Spork::TestFramework
           exit 1
         end
         runner = Turn::MiniRunner.new
+        
+        pattern = detect_pattern(argv)
+
         config = Turn.config do |c|
           c.tests     = argv
           c.framework = :minitest
+          c.pattern   = Regexp.new(pattern) if pattern
         end
         controller = Turn::Controller.new(config)
         controller.start
@@ -95,5 +99,15 @@ class Spork::TestFramework::TestUnit < Spork::TestFramework
     puts e.message
     puts e.backtrace
     puts "-"*30
+  end
+
+
+  def detect_pattern(argv)
+    pattern       = argv.detect {|arg| arg.include?('-pattern=')}
+    if pattern
+      pattern_regex = pattern.split("=").last 
+      pattern_value = pattern_regex.match("^\/(?<val>(.+))\/$")
+      pattern_value[:val] if pattern_value
+    end
   end
 end
